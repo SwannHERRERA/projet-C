@@ -1,59 +1,47 @@
-#include <gtk/gtk.h>
-// #include <gtk-3.0/gtk/gtk.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 
-void
-hello (GtkWidget *widget, gpointer data) {
-    g_print ("Bonjour tout le monde.\n");
-}
+typedef struct node {
+    char*  file_name;
+    struct node* next;
+} linked_list;
 
-gint
-delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
-    g_print ("le signal delete_event est survenu.\n");
-    return TRUE;
-}
-
-void
-destroy (GtkWidget *widget, gpointer data) {
-    gtk_main_quit ();
-}
+void add(int linked_list, char* file_name);
 
 int
-main (int argc, char *argv[]) {
-    GtkWidget *window;
-    GtkWidget *button;
+main (int argc, char **argv) {
+    if (argc < 2) {
+        printf("Nombre d'argument incorrect\n");
+        exit(1);
+    }
 
-    gtk_init (&argc, &argv);
+    linked_list * head = NULL;
+    head = (linked_list *) malloc(sizeof(linked_list));
+    if (head == NULL) {
+        return EXIT_FAILURE;
+    }
 
-    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-
-
-    gtk_signal_connect (GTK_OBJECT (window), "delete_event",
-                        GTK_SIGNAL_FUNC (delete_event), NULL);
-
-    gtk_signal_connect (GTK_OBJECT (window), "destroy",
-                        GTK_SIGNAL_FUNC (destroy), NULL);
-
-    gtk_container_border_width (GTK_CONTAINER (window), 10);
-
-    button = gtk_button_new_with_label ("Bonjour tout le monde");
-
-    gtk_signal_connect (GTK_OBJECT (button), "clicked",
-                        GTK_SIGNAL_FUNC (hello), NULL);
-
-    gtk_signal_connect_object (GTK_OBJECT (button), "clicked",
-                                GTK_SIGNAL_FUNC (gtk_widget_destroy),
-                                GTK_OBJECT (window));
-
-
-    gtk_container_add (GTK_CONTAINER (window), button);
-
-
-    gtk_widget_show (button);
-    gtk_widget_show (window);
-
-    gtk_main ();
-
-    return 0;
+    head->file_name = ".";
+    head->next = NULL;
+    DIR *actual_directory;
+    struct dirent *directory;
+    actual_directory = opendir(argv[1]);
+    if (actual_directory) {
+        while ((directory = readdir(actual_directory)) != NULL) {
+           // add(&struc, directory->d_name);
+        }
+        closedir(actual_directory);
+    }
+    return EXIT_SUCCESS;
 }
+
+void push(linked_list * head, char* file_name) {
+    linked_list * current = head;
+    while (current->next != NULL) {
+        current = current->next;
+    }

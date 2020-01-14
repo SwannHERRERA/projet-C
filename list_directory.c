@@ -9,6 +9,7 @@ Objectif: List all file in a folder
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int
 main(int argc, char** argv) {
@@ -16,15 +17,23 @@ main(int argc, char** argv) {
         printf("Nombre d'argument incorrect\n");
         exit(1);
     }
-
+    char** file_names = (char**)malloc(sizeof(char *) * 50);
+    u_int8_t i, j = 0;
     DIR *actual_directory;
     struct dirent *directory;
+
     actual_directory = opendir(argv[1]);
-    if (actual_directory) {
+    if (actual_directory && file_names) {
         while ((directory = readdir(actual_directory)) != NULL) {
-            printf("%s\n", directory->d_name);
+            file_names[i] = (char*)malloc(sizeof(char) * strlen(directory->d_name));
+            strcpy(file_names[i], directory->d_name);
+            i += 1;
         }
         closedir(actual_directory);
     }
-    return(0);
+    while (j < 50 && file_names[j] != NULL) {
+        printf("%s\n", file_names[j]);
+        j += 1;
+    }
+    return EXIT_SUCCESS;
 }
