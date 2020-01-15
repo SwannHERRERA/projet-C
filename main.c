@@ -29,7 +29,7 @@ list_directory(const char* path) {
     struct dirent *directory;
     actual_directory = opendir(path);
     if (actual_directory && file_names) {
-        while ((directory = readdir(actual_directory)) != NULL || i < 50) {
+        while ((directory = readdir(actual_directory)) != NULL && i < 50) {
             file_names[i] = (char*)malloc(sizeof(char) * strlen(directory->d_name));
             strcpy(file_names[i], directory->d_name);
             i += 1;
@@ -62,7 +62,7 @@ activate (GtkApplication* app,
     gtk_grid_attach(GTK_GRID(grid), button, 3, 0, 1, 1);
 
     const char* pwd = gtk_entry_get_text(GTK_ENTRY(entry));
-    // char** file_names = list_directory(pwd);
+    char** file_names = list_directory(pwd);
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */
                             G_TYPE_UINT,     /* FILE_OFFSET */
@@ -70,6 +70,8 @@ activate (GtkApplication* app,
                             G_TYPE_STRING,   /* FILE_DESCRIPTION */
                             G_TYPE_STRING    /* COLOR */
                             );
+
+
 
     gtk_list_store_insert_with_values(model, NULL, -1,
                                       FILE_NAME, "file_names[1]",
