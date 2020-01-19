@@ -11,6 +11,7 @@ Objectif: List all file in a folder
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "point.h"
 
 enum {
     FILE_NAME,
@@ -20,24 +21,6 @@ enum {
     COLOR,
     N_COLUMNS
 };
-
-char**
-list_directory(const char* path) {
-    char** file_names = (char**)malloc(sizeof(char *) * 50);
-    u_int8_t i = 0;
-    DIR *actual_directory;
-    struct dirent *directory;
-    actual_directory = opendir(path);
-    if (actual_directory && file_names) {
-        while ((directory = readdir(actual_directory)) != NULL && i < 50) {
-            file_names[i] = (char*)malloc(sizeof(char) * strlen(directory->d_name));
-            strcpy(file_names[i], directory->d_name);
-            i += 1;
-        }
-        closedir(actual_directory);
-    } else exit(1);
-    return file_names;
-}
 
 static void
 activate (GtkApplication* app,
@@ -55,14 +38,15 @@ activate (GtkApplication* app,
     gtk_container_add(GTK_CONTAINER(window), grid);
 
     entry = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(entry), "/");
+    gtk_entry_set_text(GTK_ENTRY(entry), "/home/swann/Documents/ESGI/C/projet");
     gtk_grid_attach(GTK_GRID(grid), entry, 0, 0, 2, 1);
 
     button = gtk_button_new_with_label("go");
     gtk_grid_attach(GTK_GRID(grid), button, 3, 0, 1, 1);
 
     const char* pwd = gtk_entry_get_text(GTK_ENTRY(entry));
-    char** file_names = list_directory(pwd);
+    u_int16_t nb_of_file = count_nb_file_in_dir(pwd);
+    MY_FILE* file_names = list_directory(pwd);
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */
                             G_TYPE_UINT,     /* FILE_OFFSET */
@@ -71,13 +55,15 @@ activate (GtkApplication* app,
                             G_TYPE_STRING    /* COLOR */
                             );
 
+    for (size_t i = 0; i < nb_of_file; i++) {
+        gtk_list_store_insert_with_values(model, NULL, -1,
+                                        FILE_NAME, file_names[i].name,
+                                        FILE_OFFSET, 0,
+                                        FILE_SIZE, 10,
+                                        -1);
+    }
 
 
-    gtk_list_store_insert_with_values(model, NULL, -1,
-                                      FILE_NAME, "file_names[1]",
-                                      FILE_OFFSET, 0,
-                                      FILE_SIZE, 10,
-                                      -1);
     // /* MODEL */
     // model = gtk_list_store_new(N_COLUMNS,
     //                            G_TYPE_STRING,   /* FILE_NAME */
