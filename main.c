@@ -22,31 +22,16 @@ enum {
     N_COLUMNS
 };
 
-static void
-activate (GtkApplication* app,
-          gpointer        user_data)
-{
-    GtkWidget         *window, *entry, *grid, *button, *array;
-    GtkListStore      *model;
-    GtkTreeViewColumn *column;
+GtkWidget         *window, *entry, *grid, *button, *array;
+GtkListStore      *model;
+GtkTreeViewColumn *column;
 
-    window = gtk_application_window_new (app);
-    gtk_window_set_title (GTK_WINDOW (window), "File Manager");
-    gtk_window_set_default_size (GTK_WINDOW (window), 700, 500);
+void
+get_model() {;
+    const char* path = gtk_entry_get_text(GTK_ENTRY(entry));
+    u_int16_t nb_of_file = count_nb_file_in_dir(path);
+    MY_FILE* file_names = list_directory(path);
 
-    grid = gtk_grid_new();
-    gtk_container_add(GTK_CONTAINER(window), grid);
-
-    entry = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(entry), "/home/swann/Documents/ESGI/C/projet");
-    gtk_grid_attach(GTK_GRID(grid), entry, 0, 0, 2, 1);
-
-    button = gtk_button_new_with_label("go");
-    gtk_grid_attach(GTK_GRID(grid), button, 3, 0, 1, 1);
-
-    const char* pwd = gtk_entry_get_text(GTK_ENTRY(entry));
-    u_int16_t nb_of_file = count_nb_file_in_dir(pwd);
-    MY_FILE* file_names = list_directory(pwd);
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */
                             G_TYPE_UINT,     /* FILE_OFFSET */
@@ -62,7 +47,49 @@ activate (GtkApplication* app,
                                         FILE_SIZE, 10,
                                         -1);
     }
+    array = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
+    g_object_unref(model);
 
+    column = gtk_tree_view_column_new_with_attributes("Name",
+                                                      gtk_cell_renderer_text_new(),
+                                                      "text", FILE_NAME,
+                                                      "background", COLOR,
+                                                      NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
+
+    column = gtk_tree_view_column_new_with_attributes("Offset",
+                                                      gtk_cell_renderer_spin_new(),
+                                                      "text", FILE_OFFSET,
+                                                      NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
+
+    column = gtk_tree_view_column_new_with_attributes("Size",
+                                                      gtk_cell_renderer_text_new(),
+                                                      "text", FILE_SIZE,
+                                                      NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
+}
+
+static void
+activate (GtkApplication* app,
+          gpointer        user_data) {
+
+    window = gtk_application_window_new (app);
+    gtk_window_set_title (GTK_WINDOW (window), "File Manager");
+    gtk_window_set_default_size (GTK_WINDOW (window), 700, 500);
+
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(window), grid);
+
+    entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(entry), "/home/swann/Documents/ESGI/C/test");
+    gtk_grid_attach(GTK_GRID(grid), entry, 0, 0, 2, 1);
+
+    button = gtk_button_new_with_label("go");
+    g_signal_connect (button, "clicked", G_CALLBACK (get_model), NULL);
+    gtk_grid_attach(GTK_GRID(grid), button, 3, 0, 1, 1);
+
+    get_model();
 
     // /* MODEL */
     // model = gtk_list_store_new(N_COLUMNS,
@@ -86,27 +113,7 @@ activate (GtkApplication* app,
     //                                   COLOR, "blue",
     //                                   -1);
 
-    array = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
-    g_object_unref(model);
 
-    column = gtk_tree_view_column_new_with_attributes("Name",
-                                                      gtk_cell_renderer_text_new(),
-                                                      "text", FILE_NAME,
-                                                      "background", COLOR,
-                                                      NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
-
-    column = gtk_tree_view_column_new_with_attributes("Offset",
-                                                      gtk_cell_renderer_spin_new(),
-                                                      "text", FILE_OFFSET,
-                                                      NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
-
-    column = gtk_tree_view_column_new_with_attributes("Size",
-                                                      gtk_cell_renderer_text_new(),
-                                                      "text", FILE_SIZE,
-                                                      NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
 
     gtk_grid_attach(GTK_GRID(grid), array, 0 , 1, 4, 4);
 

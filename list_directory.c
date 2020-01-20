@@ -62,7 +62,6 @@ list_directory(const char* path) {
     u_int8_t i = 0;
     // u_int8_t j;
     u_int16_t size_of_dir;
-    char* actual_path;
     char* path_of_file;
     DIR *actual_directory;
     struct dirent *directory;
@@ -72,16 +71,16 @@ list_directory(const char* path) {
     size_of_dir = count_nb_file_in_dir(path);
     MY_FILE* files = (MY_FILE*)malloc(sizeof(MY_FILE) * (size_of_dir + 1));
 
-    actual_path = get_full_path(path);
+    // actual_path = get_full_path(path);
 
     if (actual_directory && files) {
         while ((directory = readdir(actual_directory)) != NULL) {
             (files + i)->name = (char*)malloc(sizeof(char) * (strlen(directory->d_name) + 1));
             (files + i)->name = strcpy(files[i].name, directory->d_name);
             // mettre la taille, isdir, date de modification
-            path_of_file = (char*)malloc(sizeof(char) * (strlen(actual_path) + strlen(directory->d_name) + 2));
+            path_of_file = (char*)malloc(sizeof(char) * (strlen(path) + strlen(directory->d_name) + 2));
             // 2 = "/" & '\0'
-            strcat(strcat(strcpy(path_of_file, actual_path), "/"), directory->d_name);
+            strcat(strcat(strcpy(path_of_file, path), "/"), directory->d_name);
             if (stat(path_of_file, &statbuf) == -1) {
                 perror("stat");
                 exit(1);
