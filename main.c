@@ -11,7 +11,7 @@ Objectif: List all file in a folder
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "point.h"
+#include "file_util.h"
 
 enum {
     FILE_NAME,
@@ -22,14 +22,20 @@ enum {
     N_COLUMNS
 };
 
-GtkWidget         *window, *entry, *grid, *button, *array;
+GtkWidget         *window, *entry, *grid, *go, *delete_button, *array;
 GtkListStore      *model;
 GtkTreeViewColumn *column;
 
+// void
+// load_model() {
+
+// }
+
 void
-get_model() {;
+get_model() {
     const char* path = gtk_entry_get_text(GTK_ENTRY(entry));
     u_int16_t nb_of_file = count_nb_file_in_dir(path);
+    u_int8_t i;
     MY_FILE* file_names = list_directory(path);
 
     model = gtk_list_store_new(N_COLUMNS,
@@ -40,14 +46,19 @@ get_model() {;
                             G_TYPE_STRING    /* COLOR */
                             );
 
-    for (size_t i = 0; i < nb_of_file; i++) {
+    for (i = 0; i < nb_of_file; i++) {
         gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
                                         FILE_OFFSET, 0,
                                         FILE_SIZE, 10,
                                         -1);
     }
-    array = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
+    array = gtk_tree_view_new();
+    gtk_tree_view_set_model(GTK_TREE_VIEW(array), GTK_TREE_MODEL(model));
+    for (i = 0; i < nb_of_file; i++) {
+        free((file_names + i)->name);
+    }
+    free(file_names);
     g_object_unref(model);
 
     column = gtk_tree_view_column_new_with_attributes("Name",
@@ -76,46 +87,22 @@ activate (GtkApplication* app,
 
     window = gtk_application_window_new (app);
     gtk_window_set_title (GTK_WINDOW (window), "File Manager");
-    gtk_window_set_default_size (GTK_WINDOW (window), 700, 500);
+    gtk_window_set_default_size (GTK_WINDOW (window), 500, 500);
 
     grid = gtk_grid_new();
     gtk_container_add(GTK_CONTAINER(window), grid);
 
     entry = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(entry), "/home/swann/Documents/ESGI/C/test");
-    gtk_grid_attach(GTK_GRID(grid), entry, 0, 0, 2, 1);
+    gtk_entry_set_text(GTK_ENTRY(entry), "/home/swann/Documents/ESGI/C");
+    gtk_grid_attach(GTK_GRID(grid), entry, 0, 0, 4, 1);
 
-    button = gtk_button_new_with_label("go");
-    g_signal_connect (button, "clicked", G_CALLBACK (get_model), NULL);
-    gtk_grid_attach(GTK_GRID(grid), button, 3, 0, 1, 1);
+    go = gtk_button_new_with_label("go");
+    g_signal_connect (go, "clicked", G_CALLBACK (get_model), NULL);
+    gtk_grid_attach(GTK_GRID(grid), go, 5, 0, 2, 1);
 
     get_model();
 
-    // /* MODEL */
-    // model = gtk_list_store_new(N_COLUMNS,
-    //                            G_TYPE_STRING,   /* FILE_NAME */
-    //                            G_TYPE_UINT,     /* FILE_OFFSET */
-    //                            G_TYPE_UINT,     /* FILE_SIZE */
-    //                            G_TYPE_STRING,   /* FILE_DESCRIPTION */
-    //                            G_TYPE_STRING    /* COLOR */
-    //                           );
-    // gtk_list_store_insert_with_values(model, NULL, -1,
-    //                                   FILE_NAME, "test name",
-    //                                   FILE_OFFSET, 0,
-    //                                   FILE_SIZE, 10,
-    //                                   -1);
-    // gtk_list_store_insert_with_values(model, NULL, -1,
-    //                                   FILE_NAME, "Dummy",
-    //                                   FILE_OFFSET, 123,
-    //                                   COLOR, "black",
-    //                                   -1);
-    // gtk_list_store_insert_with_values(model, NULL, -1,
-    //                                   COLOR, "blue",
-    //                                   -1);
-
-
-
-    gtk_grid_attach(GTK_GRID(grid), array, 0 , 1, 4, 4);
+    gtk_grid_attach(GTK_GRID(grid), array, 0, 1, 8, 4);
 
     gtk_widget_show_all (window);
 }

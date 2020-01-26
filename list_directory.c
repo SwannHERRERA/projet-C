@@ -23,10 +23,6 @@ typedef struct MY_FILE {
     time_t last_change;
 } MY_FILE;
 
-/*
-* Je veux un tableau de MY_FILE qui fait la taille du dossier
-*/
-
 u_int16_t
 count_nb_file_in_dir(const char* path) {
     struct dirent * entry;
@@ -41,7 +37,7 @@ count_nb_file_in_dir(const char* path) {
 char*
 get_full_path (const char* path) {
     long path_max;
-    char* dir;
+    char* full_path;
     size_t size;
     path_max = pathconf(path, _PC_PATH_MAX);
     if (path_max == -1) {
@@ -52,9 +48,9 @@ get_full_path (const char* path) {
         size = path_max;
     }
     // convert const char* to char*
-    dir = (char*)malloc(sizeof(char) * (size + 1));
-    getcwd(dir, size);
-    return dir;
+    full_path = (char*)malloc(sizeof(char) * (size + 1));
+    getcwd(full_path, size);
+    return full_path;
 }
 
 MY_FILE*
@@ -71,8 +67,6 @@ list_directory(const char* path) {
     size_of_dir = count_nb_file_in_dir(path);
     MY_FILE* files = (MY_FILE*)malloc(sizeof(MY_FILE) * (size_of_dir + 1));
 
-    // actual_path = get_full_path(path);
-
     if (actual_directory && files) {
         while ((directory = readdir(actual_directory)) != NULL) {
             (files + i)->name = (char*)malloc(sizeof(char) * (strlen(directory->d_name) + 1));
@@ -83,7 +77,7 @@ list_directory(const char* path) {
             strcat(strcat(strcpy(path_of_file, path), "/"), directory->d_name);
             if (stat(path_of_file, &statbuf) == -1) {
                 perror("stat");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             if (S_ISDIR(statbuf.st_mode)) {
                 files[i].is_dir = true;
@@ -95,20 +89,6 @@ list_directory(const char* path) {
             i += 1;
         }
         closedir(actual_directory);
-    } else exit(1);
-    // for (j = 0; j < i; j += 1) {
-    //     free((files + i)->name);
-    // }
-    // free(files);
+    } else exit(EXIT_FAILURE);
     return files;
 }
-
-// int
-// main(int argc, char** argv) {
-//     if (argc < 2) {
-//         printf("Nombre d'argument incorrect\n");
-//         exit(1);
-//     }
-//     MY_FILE* files = list_directory(argv[1]);
-//     return EXIT_SUCCESS;
-// }
