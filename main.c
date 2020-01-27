@@ -22,17 +22,11 @@ enum {
     N_COLUMNS
 };
 
-GtkWidget         *window, *entry, *grid, *go, *delete_button, *array;
+GtkWidget         *window, *entry, *grid, *go, *delete_button, *tree_view;
 GtkListStore      *model;
 GtkTreeViewColumn *column;
 
-// void
-// load_model() {
-
-// }
-
-void
-get_model() {
+void get_model() {
     const char* path = gtk_entry_get_text(GTK_ENTRY(entry));
     u_int16_t nb_of_file = count_nb_file_in_dir(path);
     u_int8_t i;
@@ -53,33 +47,65 @@ get_model() {
                                         FILE_SIZE, 10,
                                         -1);
     }
-    array = gtk_tree_view_new();
-    gtk_tree_view_set_model(GTK_TREE_VIEW(array), GTK_TREE_MODEL(model));
+    /*****  FREE  ******/
     for (i = 0; i < nb_of_file; i++) {
         free((file_names + i)->name);
     }
     free(file_names);
-    g_object_unref(model);
+}
 
+void load_tree_view() {
+    gtk_grid_attach(GTK_GRID(grid), tree_view, 0, 1, 8, 4);
+    tree_view = gtk_tree_view_new();
+    get_model();
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tree_view), GTK_TREE_MODEL(model));
+    g_object_unref(model);
     column = gtk_tree_view_column_new_with_attributes("Name",
                                                       gtk_cell_renderer_text_new(),
                                                       "text", FILE_NAME,
                                                       "background", COLOR,
                                                       NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
 
     column = gtk_tree_view_column_new_with_attributes("Offset",
                                                       gtk_cell_renderer_spin_new(),
                                                       "text", FILE_OFFSET,
                                                       NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
 
     column = gtk_tree_view_column_new_with_attributes("Size",
                                                       gtk_cell_renderer_text_new(),
                                                       "text", FILE_SIZE,
                                                       NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(array), column);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+    gtk_grid_attach(GTK_GRID(grid), tree_view, 0 , 1, 4, 4);
 }
+
+// void refresh_tree_view() {
+//     gtk_container_remove(tree_view);
+//     tree_view = gtk_tree_view_new();
+//     get_model();
+//     gtk_tree_view_set_model(GTK_TREE_VIEW(tree_view), GTK_TREE_MODEL(model));
+//     g_object_unref(model);
+//     column = gtk_tree_view_column_new_with_attributes("Name",
+//                                                       gtk_cell_renderer_text_new(),
+//                                                       "text", FILE_NAME,
+//                                                       "background", COLOR,
+//                                                       NULL);
+//     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+
+//     column = gtk_tree_view_column_new_with_attributes("Offset",
+//                                                       gtk_cell_renderer_spin_new(),
+//                                                       "text", FILE_OFFSET,
+//                                                       NULL);
+//     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+
+//     column = gtk_tree_view_column_new_with_attributes("Size",
+//                                                       gtk_cell_renderer_text_new(),
+//                                                       "text", FILE_SIZE,
+//                                                       NULL);
+//     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+// }
 
 static void
 activate (GtkApplication* app,
@@ -97,12 +123,10 @@ activate (GtkApplication* app,
     gtk_grid_attach(GTK_GRID(grid), entry, 0, 0, 4, 1);
 
     go = gtk_button_new_with_label("go");
-    g_signal_connect (go, "clicked", G_CALLBACK (get_model), NULL);
+    g_signal_connect (go, "clicked", G_CALLBACK(load_tree_view), NULL);
     gtk_grid_attach(GTK_GRID(grid), go, 5, 0, 2, 1);
 
-    get_model();
-
-    gtk_grid_attach(GTK_GRID(grid), array, 0, 1, 8, 4);
+    // load_tree_view();
 
     gtk_widget_show_all (window);
 }

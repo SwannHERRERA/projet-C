@@ -1,2 +1,0 @@
-- stat
-- fstat pour connaitre la taille d'un fichier

@@ -31,21 +31,26 @@ is_regular_file(const char *path) {
     return S_ISREG(path_stat.st_mode);
 }
 
-void 
-list_directory_content(const char *path) {
-    DIR *actual_directory;
-    struct dirent *directory;
-    actual_directory = opendir(path);
-    if (actual_directory) {
-        while ((directory = readdir(actual_directory)) != NULL) {
-            printf("%s\n", directory->d_name);
-            if (!is_regular_file(directory->d_name) && strcmp(directory->d_name, ".") == 0 && strcmp(directory->d_name, "..") == 0) {
-                printf("\n");
-                list_directory_content(directory->d_name);
-            }
-        }
-        closedir(actual_directory);
-    }
-}
 
-// https://stackoverflow.com/questions/8436841/how-to-recursively-list-directories-in-c-on-linux NOT BAD
+void list_directory_recursively(const char *name, int indent) {
+    DIR *dir;
+    struct dirent *entry;
+
+    if (!(dir = opendir(name)))
+        return;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR) {
+            char path[1024];
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+            snprintf(path, sizeof(path), "%s/%s", name, entry->d_name);
+            printf("%*s[%s]\n", indent, "", entry->d_name);
+            listdir(path, indent + 2);
+        } else {
+            printf("%*s- %s\n", indent, "", entry->d_name);
+        }
+    }
+    closedir(dir);
+}

@@ -195,3 +195,19 @@ list_directory(const char* path) {
     } else exit(EXIT_FAILURE);
     return files;
 }
+void
+create_folder (char* path)
+{
+    struct stat st;
+    char* path_actual_dir;
+    path_actual_dir = realpath(".", NULL);
+    if (path_actual_dir != NULL) {
+        if (stat(path_actual_dir, &st) == 0) {
+            if (0 != mkdir(strcat(path_actual_dir, path),0777)) {
+                printf("When executing: mkdir(\"%s\")\n", path_actual_dir);
+                perror("mkdir");
+                exit(1);
+            }
+        }
+    }
+}
