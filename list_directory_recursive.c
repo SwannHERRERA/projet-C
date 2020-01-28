@@ -12,7 +12,7 @@ Objectif: List all file in a folder
 #include <string.h>
 
 int is_regular_file(const char *path);
-void list_directory_content(const char *path);
+void list_directory_recursively(const char *path, int indent);
 
 int
 main(int argc, char** argv) {
@@ -20,7 +20,7 @@ main(int argc, char** argv) {
         printf("Nombre d'argument incorrect\n");
         exit(1);
     }
-    list_directory_content(argv[1]);
+    list_directory_recursively(argv[1], 2);
     return(0);
 }
 
