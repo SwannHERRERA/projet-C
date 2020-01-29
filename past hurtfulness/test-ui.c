@@ -27,10 +27,10 @@ int main (int argc, char** argv) {
     g_free (filename);
     if (error)
     {
-    gint code = error->code;
-    g_printerr("%s\n", error->message);
-    g_error_free (error);
-    return code;
+        gint code = error->code;
+        g_printerr("%s\n", error->message);
+        g_error_free (error);
+        return code;
     }
 
     /* Récupération du pointeur de la fenêtre principale */

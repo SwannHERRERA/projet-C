@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "point.h"
+#include "file_util.h"
 
 char* get_full_path(const char* path) {
     long path_max;
