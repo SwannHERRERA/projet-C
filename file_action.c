@@ -196,7 +196,7 @@ list_directory(const char* path) {
     return files;
 }
 void
-create_folder (char* path)
+create_folder(char* path)
 {
     struct stat st;
     char* path_actual_dir;
