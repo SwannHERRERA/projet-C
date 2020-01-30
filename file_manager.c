@@ -103,10 +103,16 @@ void on_btn_search_clicked(GtkButton *b) {
  }
 
  void init_tree_view() {
-    const char* path = "/";
+    char* path = (char*)malloc(sizeof(char) * (strlen("/home/") + strlen(getenv("USER")) + 1));
+    //path = strcpy(strcpy(path, "/home/"), getenv("USER"));
+    strcpy(path, "/home/swann");
+
+    gtk_entry_set_text(GTK_ENTRY(entry_search), (const gchar*) path);
+
     u_int16_t nb_of_file = count_nb_file_in_dir(path);
     u_int8_t i;
     MY_FILE* file_names = list_directory(path);
+    list_of_file = GTK_WIDGET(gtk_builder_get_object(builder, "list_of_file"));
 
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */

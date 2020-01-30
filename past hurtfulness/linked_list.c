@@ -45,3 +45,4 @@ void push(linked_list * head, char* file_name) {
     while (current->next != NULL) {
         current = current->next;
     }
+}
