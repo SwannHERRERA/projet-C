@@ -74,7 +74,7 @@ void activate(int argc,char** argv) {
 void load_widget() {
     /*----  Main window  ----*/
     window          = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
-    gtk_window_set_title(window, "File manager");
+    gtk_window_set_title(GTK_WINDOW(window), "File manager");
     container       = GTK_WIDGET(gtk_builder_get_object(builder, "container"));
     btn_search      = GTK_WIDGET(gtk_builder_get_object(builder, "btn_search"));
     entry_search    = GTK_WIDGET(gtk_builder_get_object(builder, "entry_search"));
@@ -84,7 +84,7 @@ void load_widget() {
 
     /*----  modal create file  ----*/
     modal_create_file       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file"));
-    gtk_window_set_title(modal_create_file, "create file");
+    gtk_window_set_title(GTK_WINDOW(modal_create_file), "create file");
     modal_create_file_fixed = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file_fixed"));
     create_file_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_entry"));
     create_file_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_btn"));
