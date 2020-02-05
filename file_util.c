@@ -158,8 +158,7 @@ u_int16_t count_nb_file_in_dir(const char* path) {
     return file_count;
 }
 
-MY_FILE*
-list_directory(const char* path) {
+MY_FILE* list_directory(const char* path) {
     u_int8_t i = 0;
     // u_int8_t j;
     u_int16_t size_of_dir;
@@ -200,8 +199,7 @@ list_directory(const char* path) {
     } else exit(EXIT_FAILURE);
     return files;
 }
-void
-create_folder(char* path)
+void create_folder(char* path)
 {
     struct stat st;
     char* path_actual_dir;

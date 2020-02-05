@@ -7,7 +7,7 @@ Objectif: List all file in a folder
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+// #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,14 +22,20 @@ GtkWidget* entry_search;
 GtkWidget* label;
 GtkWidget* btn_new;
 
-GtkWidget* create_file_btn;
-GtkWidget* create_file_entry;
-GtkWidget* modal_create_file_fixed;
 GtkWidget* modal_create_file;
+GtkWidget* modal_create_file_fixed;
+GtkWidget* create_file_entry;
+GtkWidget* create_file_btn;
 
-GtkWidget* list_of_file;
-GtkListStore* model;
-GtkTreeViewColumn* column;
+GtkWidget* modal_file;
+GtkWidget* modal_file_fixed;
+GtkWidget* rename_entry;
+GtkWidget* rename_btn;
+GtkWidget* delete_btn;
+
+GtkWidget*          list_of_file;
+GtkListStore*       model;
+GtkTreeViewColumn*  column;
 
 enum {
     FILE_NAME,
@@ -40,16 +46,17 @@ enum {
     N_COLUMNS
 };
 
+void on_quit();
+void quit_modal_create_file();
+void quit_modal_file();
+void set_icon_theme();
 void activate(int argc,char** argv);
 void load_widget();
-void on_btn_click();
+void on_btn_search_clicked();
+void on_btn_new_clicked();
+void on_create_file_btn_clicked();
+void row_click();
 void init_tree_view();
-
-void on_quit() {
-    const char* txt = gtk_entry_get_text(GTK_ENTRY(entry_search));
-    printf("%s\n", txt);
-    gtk_main_quit();
-}
 
 int main(int argc, char** argv) {
     activate(argc, argv);
@@ -63,9 +70,8 @@ void activate(int argc,char** argv) {
 
     load_widget();
 
-    g_signal_connect(window, "destroy", G_CALLBACK(on_quit), NULL);
-
     gtk_builder_connect_signals(builder, NULL);
+    set_icon_theme();
 
     gtk_widget_show(window);
     gtk_main();
@@ -75,6 +81,7 @@ void load_widget() {
     /*----  Main window  ----*/
     window          = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
     gtk_window_set_title(GTK_WINDOW(window), "File manager");
+    g_signal_connect(window, "destroy", G_CALLBACK(on_quit), NULL);
     container       = GTK_WIDGET(gtk_builder_get_object(builder, "container"));
     btn_search      = GTK_WIDGET(gtk_builder_get_object(builder, "btn_search"));
     entry_search    = GTK_WIDGET(gtk_builder_get_object(builder, "entry_search"));
@@ -85,26 +92,53 @@ void load_widget() {
     /*----  modal create file  ----*/
     modal_create_file       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file"));
     gtk_window_set_title(GTK_WINDOW(modal_create_file), "create file");
+    g_signal_connect(modal_create_file, "delete-event", G_CALLBACK(quit_modal_create_file), NULL);
     modal_create_file_fixed = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file_fixed"));
     create_file_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_entry"));
     create_file_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_btn"));
+    
+    /*----  modal file  ----*/
+    modal_file       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file"));
+    gtk_window_set_title(GTK_WINDOW(modal_file), "Propriété");
+    g_signal_connect(modal_file, "delete-event", G_CALLBACK(quit_modal_file), NULL);
+    modal_file_fixed   = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file_fixed"));
+    rename_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "rename_entry"));
+    rename_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "rename_btn"));
+    delete_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "delete_btn"));
 }
 
-void on_btn_search_clicked(GtkButton *b) {
+void on_quit() {
+    gtk_main_quit();
+}
+
+void quit_modal_create_file() {
+    gtk_widget_hide(modal_create_file);
+}
+
+void quit_modal_file() {
+    gtk_widget_hide(modal_file);
+}
+
+void on_btn_search_clicked() {
     const char* txt = gtk_entry_get_text(GTK_ENTRY(entry_search));
     gtk_label_set_text(GTK_LABEL(label), (const gchar*) txt);
 }
- void on_btn_new_clicked(GtkButton *b) {
-    gtk_widget_show(modal_create_file);
-    printf("on_btn_new_clicked\n");
- }
 
- void on_create_file_btn_clicked(GtkButton *b) {
-    const char* path = gtk_entry_get_text(GTK_ENTRY(create_file_entry));
-    gtk_label_set_text(GTK_LABEL(label), (const gchar*) path);
- }
+void on_btn_new_clicked() {
+   gtk_widget_show(modal_create_file);
+   printf("on_btn_new_clicked\n");
+}
 
- void init_tree_view() {
+void on_create_file_btn_clicked() {
+   const char* path = gtk_entry_get_text(GTK_ENTRY(create_file_entry));
+   gtk_label_set_text(GTK_LABEL(label), (const gchar*) path);
+}
+
+void row_click(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column) {
+    gtk_widget_show(modal_file);
+}
+
+void init_tree_view() {
     char* path = (char*)malloc(sizeof(char) * (strlen("/home/") + strlen(getenv("USER")) + 1));
     strcpy(path, "/home/");
     strcat(path, getenv("USER"));
@@ -139,22 +173,44 @@ void on_btn_search_clicked(GtkButton *b) {
     gtk_tree_view_set_model(GTK_TREE_VIEW(list_of_file), GTK_TREE_MODEL(model));
     g_object_unref(model);
     column = gtk_tree_view_column_new_with_attributes("Name",
-                                                      gtk_cell_renderer_text_new(),
-                                                      "text", FILE_NAME,
-                                                      "background", COLOR,
-                                                      NULL);
+                                                        gtk_cell_renderer_text_new(),
+                                                        "text", FILE_NAME,
+                                                        "background", COLOR,
+                                                        NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
     column = gtk_tree_view_column_new_with_attributes("Offset",
-                                                      gtk_cell_renderer_spin_new(),
-                                                      "text", FILE_OFFSET,
-                                                      NULL);
+                                                        gtk_cell_renderer_spin_new(),
+                                                        "text", FILE_OFFSET,
+                                                        NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
     column = gtk_tree_view_column_new_with_attributes("Size",
-                                                      gtk_cell_renderer_text_new(),
-                                                      "text", FILE_SIZE,
-                                                      NULL);
+                                                        gtk_cell_renderer_text_new(),
+                                                        "text", FILE_SIZE,
+                                                        NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
+}
+ void set_icon_theme() {
+    GError *error = NULL;
+    GtkIconTheme *icon_theme;
+    GdkPixbuf *pixbuf;
+
+    icon_theme = gtk_icon_theme_get_default();
+    pixbuf = gtk_icon_theme_load_icon(icon_theme,
+                                    "org.gnome.Todo.png", // icon name
+                                    256, // icon size
+                                    0,  // flags
+                                    &error);
+    if (!pixbuf)
+    {
+        g_warning ("Couldn’t load icon: %s", error->message);
+        g_error_free (error);
+    }
+    else
+    {
+        // Use the pixbuf
+        g_object_unref (pixbuf);
+    }
  }
