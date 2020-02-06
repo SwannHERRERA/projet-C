@@ -65,6 +65,7 @@ void on_create_file_btn_clicked();
 void on_create_folder_btn_clicked();
 void row_click();
 void init_tree_view();
+char* get_name_row_activated(GtkTreeView *tree_view, GtkTreePath *path);
 
 int main(int argc, char** argv) {
     activate(argc, argv);
@@ -140,8 +141,21 @@ void quit_modal_file() {
 }
 
 void on_btn_search_clicked() {
-    const char* txt = gtk_entry_get_text(GTK_ENTRY(entry_search));
-    gtk_label_set_text(GTK_LABEL(label), (const gchar*) txt);
+    const char* path = gtk_entry_get_text(GTK_ENTRY(entry_search));
+    u_int16_t nb_of_file = count_nb_file_in_dir(path);
+    u_int8_t i;
+    MY_FILE* file_names = list_directory(path);
+    gtk_list_store_clear(model);
+
+    for (i = 0; i < nb_of_file; i++) {
+        gtk_list_store_insert_with_values(model, NULL, -1,
+                                        FILE_NAME, file_names[i].name,
+                                        FILE_OFFSET, 0,
+                                        FILE_SIZE, 10,
+                                        -1);
+    }
+    free(file_names);
+    gtk_tree_view_set_model(GTK_TREE_VIEW(list_of_file), GTK_TREE_MODEL(model));
 }
 
 void on_btn_new_clicked() {
@@ -161,8 +175,11 @@ void on_create_folder_btn_clicked() {
     gtk_widget_hide(modal_create_folder);
 }
 
-void row_click(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column) {
+void row_click(GtkTreeView *tree_view, GtkTreePath *path) {
+    char* name = get_name_row_activated(tree_view, path);
+    gtk_entry_set_text(GTK_ENTRY(rename_entry), (const gchar*) name);
     gtk_widget_show(modal_file);
+
 }
 
 void init_tree_view() {
@@ -188,7 +205,7 @@ void init_tree_view() {
     for (i = 0; i < nb_of_file; i++) {
         gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_OFFSET, 0,
+        FILE_OFFSET, 0,
                                         FILE_SIZE, 10,
                                         -1);
     }
@@ -198,7 +215,6 @@ void init_tree_view() {
     }
     free(file_names);
     gtk_tree_view_set_model(GTK_TREE_VIEW(list_of_file), GTK_TREE_MODEL(model));
-    g_object_unref(model);
     column = gtk_tree_view_column_new_with_attributes("Name",
                                                         gtk_cell_renderer_text_new(),
                                                         "text", FILE_NAME,
@@ -218,4 +234,18 @@ void init_tree_view() {
                                                         NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
+}
+
+char* get_name_row_activated(GtkTreeView *tree_view, GtkTreePath *path) {
+    char* name;
+
+    GtkTreeIter iter;
+    GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
+    if (gtk_tree_model_get_iter(model, &iter, path)) {
+        gtk_tree_model_get(model, &iter, 0, &name, -1);
+        return name;
+    } else {
+        fprintf(stderr, "Error! selected column not found!\n");
+        exit(EXIT_FAILURE);
+    }
 }

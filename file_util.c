@@ -146,7 +146,7 @@ short remove_directory(const char *path) {
 // }
 
 u_int16_t count_nb_file_in_dir(const char* path) {
-    struct dirent * entry;
+    struct dirent* entry;
     DIR * directory;
     u_int16_t file_count = 0;
     directory = opendir(path);
@@ -155,6 +155,7 @@ u_int16_t count_nb_file_in_dir(const char* path) {
             file_count += 1;
         }
     }
+    closedir(directory);
     return file_count;
 }
 
