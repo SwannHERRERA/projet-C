@@ -21,6 +21,7 @@ GtkWidget* btn_search;
 GtkWidget* entry_search;
 GtkWidget* label;
 GtkWidget* btn_new;
+GtkWidget* btn_new_folder;
 
 GtkWidget* modal_create_file;
 GtkWidget* modal_create_file_fixed;
@@ -32,6 +33,11 @@ GtkWidget* modal_file_fixed;
 GtkWidget* rename_entry;
 GtkWidget* rename_btn;
 GtkWidget* delete_btn;
+
+GtkWidget* modal_create_folder;
+GtkWidget* modal_create_folder_fixed;
+GtkWidget* create_folder_entry;
+GtkWidget* create_folder_btn;
 
 GtkWidget*          list_of_file;
 GtkListStore*       model;
@@ -48,13 +54,15 @@ enum {
 
 void on_quit();
 void quit_modal_create_file();
+void quit_modal_create_folder();
 void quit_modal_file();
-void set_icon_theme();
 void activate(int argc,char** argv);
 void load_widget();
 void on_btn_search_clicked();
 void on_btn_new_clicked();
+void on_click_new_folder();
 void on_create_file_btn_clicked();
+void on_create_folder_btn_clicked();
 void row_click();
 void init_tree_view();
 
@@ -71,7 +79,6 @@ void activate(int argc,char** argv) {
     load_widget();
 
     gtk_builder_connect_signals(builder, NULL);
-    set_icon_theme();
 
     gtk_widget_show(window);
     gtk_main();
@@ -88,6 +95,7 @@ void load_widget() {
     init_tree_view();
     label           = GTK_WIDGET(gtk_builder_get_object(builder, "test_label"));
     btn_new         = GTK_WIDGET(gtk_builder_get_object(builder, "test_label"));
+    btn_new_folder  = GTK_WIDGET(gtk_builder_get_object(builder, "btn_new_folder"));
 
     /*----  modal create file  ----*/
     modal_create_file       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file"));
@@ -105,6 +113,14 @@ void load_widget() {
     rename_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "rename_entry"));
     rename_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "rename_btn"));
     delete_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "delete_btn"));
+
+    /*----  modal create folder  ----*/
+    modal_create_folder       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_folder"));
+    gtk_window_set_title(GTK_WINDOW(modal_create_folder), "create folder");
+    g_signal_connect(modal_create_folder, "delete-event", G_CALLBACK(quit_modal_create_folder), NULL);
+    modal_create_folder_fixed = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_folder_fixed"));
+    create_folder_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "create_folder_entry"));
+    create_folder_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "create_folder_btn"));    
 }
 
 void on_quit() {
@@ -113,6 +129,10 @@ void on_quit() {
 
 void quit_modal_create_file() {
     gtk_widget_hide(modal_create_file);
+}
+
+void quit_modal_create_folder() {
+    gtk_widget_hide(modal_create_folder);
 }
 
 void quit_modal_file() {
@@ -126,12 +146,19 @@ void on_btn_search_clicked() {
 
 void on_btn_new_clicked() {
    gtk_widget_show(modal_create_file);
-   printf("on_btn_new_clicked\n");
+}
+
+void on_click_new_folder() {
+    gtk_widget_show(modal_create_folder);
 }
 
 void on_create_file_btn_clicked() {
    const char* path = gtk_entry_get_text(GTK_ENTRY(create_file_entry));
    gtk_label_set_text(GTK_LABEL(label), (const gchar*) path);
+}
+
+void on_create_folder_btn_clicked() {
+    gtk_widget_hide(modal_create_folder);
 }
 
 void row_click(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column) {
@@ -192,25 +219,3 @@ void init_tree_view() {
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
 }
- void set_icon_theme() {
-    GError *error = NULL;
-    GtkIconTheme *icon_theme;
-    GdkPixbuf *pixbuf;
-
-    icon_theme = gtk_icon_theme_get_default();
-    pixbuf = gtk_icon_theme_load_icon(icon_theme,
-                                    "org.gnome.Todo.png", // icon name
-                                    256, // icon size
-                                    0,  // flags
-                                    &error);
-    if (!pixbuf)
-    {
-        g_warning ("Couldn’t load icon: %s", error->message);
-        g_error_free (error);
-    }
-    else
-    {
-        // Use the pixbuf
-        g_object_unref (pixbuf);
-    }
- }
