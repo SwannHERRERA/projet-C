@@ -66,6 +66,7 @@ void on_create_folder_btn_clicked();
 void row_click();
 void init_tree_view();
 char* get_name_row_activated(GtkTreeView *tree_view, GtkTreePath *path);
+void actualize_tree_view();
 
 int main(int argc, char** argv) {
     activate(argc, argv);
@@ -141,6 +142,10 @@ void quit_modal_file() {
 }
 
 void on_btn_search_clicked() {
+    actualize_tree_view();
+}
+
+void actualize_tree_view() {
     const char* path = gtk_entry_get_text(GTK_ENTRY(entry_search));
     u_int16_t nb_of_file = count_nb_file_in_dir(path);
     u_int8_t i;
@@ -168,7 +173,8 @@ void on_click_new_folder() {
 
 void on_create_file_btn_clicked() {
    const char* path = gtk_entry_get_text(GTK_ENTRY(create_file_entry));
-   gtk_label_set_text(GTK_LABEL(label), (const gchar*) path);
+   create_file((char*)path);
+    actualize_tree_view();
 }
 
 void on_create_folder_btn_clicked() {
