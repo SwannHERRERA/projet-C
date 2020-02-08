@@ -151,7 +151,7 @@ u_int16_t count_nb_file_in_dir(const char* path) {
     u_int16_t file_count = 0;
     directory = opendir(path);
     while ((entry = readdir(directory)) != NULL) {
-        if (strchr(entry->d_name, '.') == NULL) {
+        if (entry->d_name[0] != '.') {
             file_count += 1;
         }
     }
@@ -174,7 +174,7 @@ MY_FILE* list_directory(const char* path) {
 
     if (actual_directory && files) {
         while ((directory = readdir(actual_directory)) != NULL) {
-            if (strchr(directory->d_name, '.') != NULL) {
+            if (directory->d_name[0] == '.') {
                 continue;
             }
             (files + i)->name = (char*)malloc(sizeof(char) * (strlen(directory->d_name) + 1));
