@@ -164,7 +164,7 @@ void actualize_tree_view() {
 }
 
 void on_btn_new_clicked() {
-   gtk_widget_show(modal_create_file);
+    gtk_widget_show(modal_create_file);
 }
 
 void on_click_new_folder() {
@@ -172,13 +172,22 @@ void on_click_new_folder() {
 }
 
 void on_create_file_btn_clicked() {
-   const char* path = gtk_entry_get_text(GTK_ENTRY(create_file_entry));
-   create_file((char*)path);
+    char* path = malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(create_file_entry))) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
+    strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+    strcat(path, "/");
+    strcat(path, (char*)gtk_entry_get_text(GTK_ENTRY(create_file_entry)));
+    create_file((char*)path);
+    free(path);
+    gtk_widget_hide(modal_create_file);
     actualize_tree_view();
 }
 
 void on_create_folder_btn_clicked() {
+    char* path = (char*)gtk_entry_get_text(GTK_ENTRY(entry_search));
+    char* name = (char*)gtk_entry_get_text(GTK_ENTRY(create_folder_entry));
+    create_folder(path, name);
     gtk_widget_hide(modal_create_folder);
+    actualize_tree_view();
 }
 
 void row_click(GtkTreeView *tree_view, GtkTreePath *path) {

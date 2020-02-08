@@ -36,8 +36,8 @@ void create_file(char* path) {
     }
 }
 
-void rename_file(char* path) {
-    if (rename(path, "RARRAR.AR") == -1) {
+void rename_file(char* path, char* new_name) {
+    if (rename(path, new_name) == -1) {
         printf("error");
         exit(EXIT_FAILURE);
     }
@@ -200,18 +200,23 @@ MY_FILE* list_directory(const char* path) {
     } else exit(EXIT_FAILURE);
     return files;
 }
-void create_folder(char* path)
+void create_folder(char* path, char* name)
 {
+    char* path_of_new_folder;
+    path_of_new_folder = (char*)malloc(
+        sizeof(char) * (strlen(path) + strlen(name) + 2));
+    strcpy(path_of_new_folder, path);
+    strcat(path_of_new_folder, "/");
+    strcat(path_of_new_folder, name);
     struct stat st;
-    char* path_actual_dir;
-    path_actual_dir = realpath(".", NULL);
-    if (path_actual_dir != NULL) {
-        if (stat(path_actual_dir, &st) == 0) {
-            if (0 != mkdir(strcat(path_actual_dir, path),0777)) {
-                printf("When executing: mkdir(\"%s\")\n", path_actual_dir);
+    if (path != NULL) {
+        if (stat(path, &st) == 0) {
+            if (0 != mkdir(path_of_new_folder, 0777)) {
+                printf("error: mkdir('%s')\n", path);
                 perror("mkdir");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
         }
     }
+    free(path_of_new_folder);
 }

@@ -21,8 +21,10 @@ MY_FILE* list_directory(const char* path);
 
 void create_file(char* path);
 
-void rename_file(char* path);
+void rename_file(char* path, char* new_name);
 
 void delete_file(char* path);
 
 short remove_directory(const char *path);
+
+void create_folder(char* path, char* name);
