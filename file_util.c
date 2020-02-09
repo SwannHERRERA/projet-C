@@ -220,3 +220,25 @@ void create_folder(char* path, char* name)
     }
     free(path_of_new_folder);
 }
+
+char* humanFileSize(int bytes) {
+    char** units = {"KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"};
+    int u = -1;
+    char result[15];
+
+    if(abs(bytes) < 1024) {
+        sprintf(result, "%i", bytes);
+        strcat(result, " B");
+        return result;
+    }
+
+    do {
+        bytes /= 1024;
+        u += 1;
+    } while(abs(bytes) >= 1024 && u < 2);
+
+    sprintf(result, "%i", bytes);
+    strcat(result, " ");
+    strcat(result, units[u]);
+    return result;
+}

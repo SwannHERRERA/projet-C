@@ -45,7 +45,6 @@ GtkTreeViewColumn*  column;
 
 enum {
     FILE_NAME,
-    FILE_OFFSET,
     FILE_SIZE,
     FILE_DESCRIPTION,
     COLOR,
@@ -153,11 +152,18 @@ void actualize_tree_view() {
     gtk_list_store_clear(model);
 
     for (i = 0; i < nb_of_file; i++) {
-        gtk_list_store_insert_with_values(model, NULL, -1,
+        if (file_names[i].is_dir == true) {
+            gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_OFFSET, 0,
-                                        FILE_SIZE, 10,
+                                        FILE_SIZE, 0,
+                                        COLOR, "#154874",
                                         -1);
+        } else {    
+            gtk_list_store_insert_with_values(model, NULL, -1,
+                                        FILE_NAME, file_names[i].name,
+                                        FILE_SIZE, file_names[i].size,
+                                        -1);
+        }
     }
     free(file_names);
     gtk_tree_view_set_model(GTK_TREE_VIEW(list_of_file), GTK_TREE_MODEL(model));
@@ -211,18 +217,23 @@ void init_tree_view() {
 
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */
-                            G_TYPE_UINT,     /* FILE_OFFSET */
-                            G_TYPE_UINT,     /* FILE_SIZE */
-                            G_TYPE_STRING,   /* FILE_DESCRIPTION */
+                            G_TYPE_STRING,     /* FILE_SIZE */
                             G_TYPE_STRING    /* COLOR */
                             );
 
     for (i = 0; i < nb_of_file; i++) {
-        gtk_list_store_insert_with_values(model, NULL, -1,
+        if (file_names[i].is_dir == true) {
+            gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-        FILE_OFFSET, 0,
-                                        FILE_SIZE, 10,
+                                        FILE_SIZE, 0,
+                                        COLOR, "#154874",
                                         -1);
+        } else {    
+            gtk_list_store_insert_with_values(model, NULL, -1,
+                                        FILE_NAME, file_names[i].name,
+                                        FILE_SIZE, humanFileSize(file_names[i].size),
+                                        -1);
+        }
     }
     /*****  FREE  *****/
     for (i = 0; i < nb_of_file; i++) {
@@ -234,12 +245,6 @@ void init_tree_view() {
                                                         gtk_cell_renderer_text_new(),
                                                         "text", FILE_NAME,
                                                         "background", COLOR,
-                                                        NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
-
-    column = gtk_tree_view_column_new_with_attributes("Offset",
-                                                        gtk_cell_renderer_spin_new(),
-                                                        "text", FILE_OFFSET,
                                                         NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
