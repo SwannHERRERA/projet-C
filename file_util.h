@@ -27,6 +27,10 @@ void delete_file(char* path);
 
 short remove_directory(const char *path);
 
+<<<<<<< HEAD
 bool create_folder(char* path, char* name);
 
 char* humanFileSize(int bytes);
+=======
+bool create_folder(char* path, char* name);
+>>>>>>> master

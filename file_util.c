@@ -220,6 +220,7 @@ bool create_folder(char* path, char* name)
     }
     free(path_of_new_folder);
     return EXIT_SUCCESS;
+<<<<<<< HEAD
 }
 
 char* humanFileSize(int bytes) {
@@ -242,4 +243,6 @@ char* humanFileSize(int bytes) {
     strcat(result, " ");
     strcat(result, units[u]);
     return result;
+=======
+>>>>>>> master
 }
