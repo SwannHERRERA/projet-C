@@ -220,13 +220,12 @@ bool create_folder(char* path, char* name)
     }
     free(path_of_new_folder);
     return EXIT_SUCCESS;
-<<<<<<< HEAD
 }
 
 char* humanFileSize(int bytes) {
-    char** units = {"KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"};
+    char units[8][4] = {"KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"};
     int u = -1;
-    char result[15];
+    char* result = (char*)malloc(sizeof(char) * 15);
 
     if(abs(bytes) < 1024) {
         sprintf(result, "%i", bytes);
@@ -243,6 +242,4 @@ char* humanFileSize(int bytes) {
     strcat(result, " ");
     strcat(result, units[u]);
     return result;
-=======
->>>>>>> master
 }

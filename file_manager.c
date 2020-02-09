@@ -22,6 +22,7 @@ GtkWidget* btn_search;
 GtkWidget* entry_search;
 GtkWidget* btn_new;
 GtkWidget* btn_new_folder;
+GtkWidget* error_search;
 
 /* ---- Modal create file ---- */
 GtkWidget* modal_create_file;
@@ -54,7 +55,6 @@ GtkTreeViewColumn*  column;
 enum {
     FILE_NAME,
     FILE_SIZE,
-    FILE_DESCRIPTION,
     COLOR,
     N_COLUMNS
 };
@@ -106,6 +106,7 @@ void load_widget() {
     init_tree_view();
     btn_new         = GTK_WIDGET(gtk_builder_get_object(builder, "btn_new"));
     btn_new_folder  = GTK_WIDGET(gtk_builder_get_object(builder, "btn_new_folder"));
+    error_search    = GTK_WIDGET(gtk_builder_get_object(builder, "error_search"));
 
     /*----  modal create file  ----*/
     modal_create_file       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file"));
@@ -157,7 +158,14 @@ void quit_modal_file() {
 }
 
 void on_btn_search_clicked() {
-    actualize_tree_view();
+    const char* path = gtk_entry_get_text(GTK_ENTRY(entry_search));
+    struct stat f;
+    if (stat(path, &f) == 0 && S_ISDIR(f.st_mode)) {
+        actualize_tree_view();
+        gtk_label_set_text(GTK_LABEL(error_search), "");
+    } else {
+        gtk_label_set_text(GTK_LABEL(error_search), "Error search wrong entry");
+    }
 }
 
 void actualize_tree_view() {
@@ -167,25 +175,30 @@ void actualize_tree_view() {
     MY_FILE* file_names = list_directory(path);
     gtk_list_store_clear(model);
 
-    for (i = 0; i < nb_of_file; i++) {
+     for (i = 0; i < nb_of_file; i++) {
         if (file_names[i].is_dir == true) {
             char* path = malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + strlen(file_names[i].name) + 2));
             strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
             strcat(path, "/");
             strcat(path, file_names[i].name);
+            char size_of_file[15];
+            sprintf(size_of_file, "%hu", count_nb_file_in_dir(path));
 
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_SIZE, count_nb_file_in_dir(path),
+                                        FILE_SIZE, size_of_file,
                                         COLOR, "#154871",
                                         -1);
             free(path);
         } else {
+            char* size_of_file = humanFileSize(file_names[i].size);
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_SIZE, 10,
+                                        FILE_SIZE, size_of_file,
                                         -1);
+            free(size_of_file);
         }
+        
     }
     free(file_names);
     gtk_tree_view_set_model(GTK_TREE_VIEW(list_of_file), GTK_TREE_MODEL(model));
@@ -268,19 +281,26 @@ void init_tree_view() {
             strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
             strcat(path, "/");
             strcat(path, file_names[i].name);
+            char size_of_file[15];
+            sprintf(size_of_file, "%hu", count_nb_file_in_dir(path));
 
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_SIZE, count_nb_file_in_dir(path),
+                                        FILE_SIZE, size_of_file,
                                         COLOR, "#154871",
                                         -1);
             free(path);
+            printf("%ld\n", file_names[i].last_change);
+
         } else {
+            char* size_of_file = humanFileSize(file_names[i].size);
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_SIZE, humanFileSize(file_names[i].size),
+                                        FILE_SIZE, size_of_file,
                                         -1);
+            free(size_of_file);
         }
+        
     }
     /*****  FREE  *****/
     for (i = 0; i < nb_of_file; i++) {
