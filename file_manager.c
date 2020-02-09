@@ -28,11 +28,15 @@ GtkWidget* modal_create_file_fixed;
 GtkWidget* create_file_entry;
 GtkWidget* create_file_btn;
 
+/*---- Modal file ----*/
 GtkWidget* modal_file;
 GtkWidget* modal_file_fixed;
 GtkWidget* rename_entry;
 GtkWidget* rename_btn;
 GtkWidget* delete_btn;
+GtkWidget* parent_folder_label;
+GtkWidget* error_rename;
+char* old_name;
 
 GtkWidget* modal_create_folder;
 GtkWidget* modal_create_folder_fixed;
@@ -45,7 +49,6 @@ GtkTreeViewColumn*  column;
 
 enum {
     FILE_NAME,
-    FILE_OFFSET,
     FILE_SIZE,
     FILE_DESCRIPTION,
     COLOR,
@@ -108,13 +111,16 @@ void load_widget() {
     create_file_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_btn"));
     
     /*----  modal file  ----*/
-    modal_file       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file"));
+    modal_file          = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file"));
     gtk_window_set_title(GTK_WINDOW(modal_file), "Propriété");
     g_signal_connect(modal_file, "delete-event", G_CALLBACK(quit_modal_file), NULL);
-    modal_file_fixed   = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file_fixed"));
-    rename_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "rename_entry"));
-    rename_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "rename_btn"));
-    delete_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "delete_btn"));
+    modal_file_fixed    = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file_fixed"));
+    rename_entry        = GTK_WIDGET(gtk_builder_get_object(builder, "rename_entry"));
+    rename_btn          = GTK_WIDGET(gtk_builder_get_object(builder, "rename_btn"));
+    delete_btn          = GTK_WIDGET(gtk_builder_get_object(builder, "delete_btn"));
+    parent_folder_label = GTK_WIDGET(gtk_builder_get_object(builder, "parent_folder"));
+    error_rename        = GTK_WIDGET(gtk_builder_get_object(builder, "error_rename"));
+
 
     /*----  modal create folder  ----*/
     modal_create_folder       = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_folder"));
@@ -138,6 +144,8 @@ void quit_modal_create_folder() {
 }
 
 void quit_modal_file() {
+    actualize_tree_view();
+    free(old_name);
     gtk_widget_hide(modal_file);
 }
 
@@ -153,11 +161,24 @@ void actualize_tree_view() {
     gtk_list_store_clear(model);
 
     for (i = 0; i < nb_of_file; i++) {
-        gtk_list_store_insert_with_values(model, NULL, -1,
+        if (file_names[i].is_dir == true) {
+            char* path = malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + strlen(file_names[i].name) + 2));
+            strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+            strcat(path, "/");
+            strcat(path, file_names[i].name);
+
+            gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_OFFSET, 0,
+                                        FILE_SIZE, count_nb_file_in_dir(path),
+                                        COLOR, "#154871",
+                                        -1);
+            free(path);
+        } else {
+            gtk_list_store_insert_with_values(model, NULL, -1,
+                                        FILE_NAME, file_names[i].name,
                                         FILE_SIZE, 10,
                                         -1);
+        }
     }
     free(file_names);
     gtk_tree_view_set_model(GTK_TREE_VIEW(list_of_file), GTK_TREE_MODEL(model));
@@ -192,7 +213,30 @@ void on_create_folder_btn_clicked() {
 
 void row_click(GtkTreeView *tree_view, GtkTreePath *path) {
     char* name = get_name_row_activated(tree_view, path);
-    gtk_entry_set_text(GTK_ENTRY(rename_entry), (const gchar*) name);
+    char* full_path;
+    char* parent_folder;
+    full_path = (char*)malloc(sizeof(char) * (strlen(name) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
+    parent_folder = (char*)malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + strlen("Parent folder : ") + 1));
+    strcpy(parent_folder, "Parent folder : ");
+    strcat(parent_folder, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+    strcpy(full_path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+    strcat(full_path, "/");
+    strcat(full_path, name);
+    struct stat statbuf;
+
+    if (stat(full_path, &statbuf) == -1) {
+        perror("stat");
+        exit(EXIT_FAILURE);
+    }
+
+    /*----  make old name in globale ----*/
+    old_name = (char*)malloc(sizeof(char) * strlen(name));
+    old_name = name;
+
+    gtk_label_set_text(GTK_LABEL(parent_folder_label), parent_folder);
+    free(parent_folder);
+    free(full_path);
+    gtk_entry_set_text(GTK_ENTRY(rename_entry), (const gchar*)name);
     gtk_widget_show(modal_file);
 
 }
@@ -211,18 +255,30 @@ void init_tree_view() {
 
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */
-                            G_TYPE_UINT,     /* FILE_OFFSET */
                             G_TYPE_UINT,     /* FILE_SIZE */
                             G_TYPE_STRING,   /* FILE_DESCRIPTION */
                             G_TYPE_STRING    /* COLOR */
                             );
 
     for (i = 0; i < nb_of_file; i++) {
-        gtk_list_store_insert_with_values(model, NULL, -1,
+        if (file_names[i].is_dir == true) {
+            char* path = malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + strlen(file_names[i].name) + 2));
+            strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+            strcat(path, "/");
+            strcat(path, file_names[i].name);
+
+            gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-        FILE_OFFSET, 0,
+                                        FILE_SIZE, count_nb_file_in_dir(path),
+                                        COLOR, "#154871",
+                                        -1);
+            free(path);
+        } else {
+            gtk_list_store_insert_with_values(model, NULL, -1,
+                                        FILE_NAME, file_names[i].name,
                                         FILE_SIZE, 10,
                                         -1);
+        }
     }
     /*****  FREE  *****/
     for (i = 0; i < nb_of_file; i++) {
@@ -234,12 +290,6 @@ void init_tree_view() {
                                                         gtk_cell_renderer_text_new(),
                                                         "text", FILE_NAME,
                                                         "background", COLOR,
-                                                        NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
-
-    column = gtk_tree_view_column_new_with_attributes("Offset",
-                                                        gtk_cell_renderer_spin_new(),
-                                                        "text", FILE_OFFSET,
                                                         NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(list_of_file), column);
 
@@ -263,4 +313,28 @@ char* get_name_row_activated(GtkTreeView *tree_view, GtkTreePath *path) {
         fprintf(stderr, "Error! selected column not found!\n");
         exit(EXIT_FAILURE);
     }
+}
+
+void on_rename_btn_clicked() {
+    char* new_path;
+    char* old_path;
+    char* error = "Error rename wrong new name";
+
+    old_path = (char*)malloc(sizeof(char) * (strlen(old_name) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
+    new_path = (char*)malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(rename_entry))) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
+
+    strcpy(old_path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+    strcpy(new_path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+
+    strcat(old_path, "/");
+    strcat(new_path, "/");
+
+    strcat(old_path, old_name);
+    strcat(new_path, (char*)gtk_entry_get_text(GTK_ENTRY(rename_entry)));
+
+    printf("new name : %s", new_path);
+    if (rename_file(old_path, new_path) != 0) {
+        gtk_label_set_text(GTK_LABEL(error_rename), error);
+    }
+    free(new_path);
 }

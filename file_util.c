@@ -36,11 +36,11 @@ void create_file(char* path) {
     }
 }
 
-void rename_file(char* path, char* new_name) {
-    if (rename(path, new_name) == -1) {
-        printf("error");
-        exit(EXIT_FAILURE);
+bool rename_file(char* path, char* new_path) {
+    if (rename(path, new_path) == -1) {
+        return EXIT_FAILURE;
     }
+    return EXIT_SUCCESS;
 }
 
 void delete_file(char* path) {
