@@ -25,15 +25,16 @@ char* get_full_path(const char* path) {
     return full_path;
 }
 
-void create_file(char* path) {
+bool create_file(char* path) {
     struct stat f;
     if (stat(path, &f) == -1) {
         FILE* new_file = fopen(path, "w");
         fclose(new_file);
     } else {
         printf("Erreur le fichier existe déjà\n");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
+    return EXIT_SUCCESS;
 }
 
 bool rename_file(char* path, char* new_path) {
@@ -66,7 +67,8 @@ short remove_directory(const char *path) {
         r = 0;
         struct dirent* file;
         while (!r && (file=readdir(directory))) {
-            printf("%s\n",file->d_name);
+            // printf("%s\n",file->d_name);
+            // printf("%s\n",file->is_dir);
             short r2 = -1;
             char *buf;
             size_t len;
@@ -200,7 +202,7 @@ MY_FILE* list_directory(const char* path) {
     } else exit(EXIT_FAILURE);
     return files;
 }
-void create_folder(char* path, char* name)
+bool create_folder(char* path, char* name)
 {
     char* path_of_new_folder;
     path_of_new_folder = (char*)malloc(
@@ -212,11 +214,32 @@ void create_folder(char* path, char* name)
     if (path != NULL) {
         if (stat(path, &st) == 0) {
             if (0 != mkdir(path_of_new_folder, 0777)) {
-                printf("error: mkdir('%s')\n", path);
-                perror("mkdir");
-                exit(EXIT_FAILURE);
+                return EXIT_FAILURE;
             }
         }
     }
     free(path_of_new_folder);
+    return EXIT_SUCCESS;
+}
+
+char* humanFileSize(int bytes) {
+    char** units = {"KiB","MiB","GiB","TiB","PiB","EiB","ZiB","YiB"};
+    int u = -1;
+    char result[15];
+
+    if(abs(bytes) < 1024) {
+        sprintf(result, "%i", bytes);
+        strcat(result, " B");
+        return result;
+    }
+
+    do {
+        bytes /= 1024;
+        u += 1;
+    } while(abs(bytes) >= 1024 && u < 2);
+
+    sprintf(result, "%i", bytes);
+    strcat(result, " ");
+    strcat(result, units[u]);
+    return result;
 }

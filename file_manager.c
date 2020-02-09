@@ -15,18 +15,20 @@ Objectif: List all file in a folder
 
 GtkBuilder* builder;
 
+/* ---- Main windows ---- */
 GtkWidget* window;
 GtkWidget* container;
 GtkWidget* btn_search;
 GtkWidget* entry_search;
-GtkWidget* label;
 GtkWidget* btn_new;
 GtkWidget* btn_new_folder;
 
+/* ---- Modal create file ---- */
 GtkWidget* modal_create_file;
 GtkWidget* modal_create_file_fixed;
 GtkWidget* create_file_entry;
 GtkWidget* create_file_btn;
+GtkWidget* error_create_file_label;
 
 /*---- Modal file ----*/
 GtkWidget* modal_file;
@@ -38,10 +40,12 @@ GtkWidget* parent_folder_label;
 GtkWidget* error_rename;
 char* old_name;
 
+/* ---- Modal creation of folder ---- */
 GtkWidget* modal_create_folder;
 GtkWidget* modal_create_folder_fixed;
 GtkWidget* create_folder_entry;
 GtkWidget* create_folder_btn;
+GtkWidget* error_create_folder_label;
 
 GtkWidget*          list_of_file;
 GtkListStore*       model;
@@ -70,6 +74,8 @@ void row_click();
 void init_tree_view();
 char* get_name_row_activated(GtkTreeView *tree_view, GtkTreePath *path);
 void actualize_tree_view();
+void on_delete_btn_clicked();
+void on_rename_btn_clicked();
 
 int main(int argc, char** argv) {
     activate(argc, argv);
@@ -98,8 +104,7 @@ void load_widget() {
     btn_search      = GTK_WIDGET(gtk_builder_get_object(builder, "btn_search"));
     entry_search    = GTK_WIDGET(gtk_builder_get_object(builder, "entry_search"));
     init_tree_view();
-    label           = GTK_WIDGET(gtk_builder_get_object(builder, "test_label"));
-    btn_new         = GTK_WIDGET(gtk_builder_get_object(builder, "test_label"));
+    btn_new         = GTK_WIDGET(gtk_builder_get_object(builder, "btn_new"));
     btn_new_folder  = GTK_WIDGET(gtk_builder_get_object(builder, "btn_new_folder"));
 
     /*----  modal create file  ----*/
@@ -109,6 +114,7 @@ void load_widget() {
     modal_create_file_fixed = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_file_fixed"));
     create_file_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_entry"));
     create_file_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "create_file_btn"));
+    error_create_file_label = GTK_WIDGET(gtk_builder_get_object(builder, "error_create_file_label"));
     
     /*----  modal file  ----*/
     modal_file          = GTK_WIDGET(gtk_builder_get_object(builder, "modal_file"));
@@ -129,6 +135,7 @@ void load_widget() {
     modal_create_folder_fixed = GTK_WIDGET(gtk_builder_get_object(builder, "modal_create_folder_fixed"));
     create_folder_entry       = GTK_WIDGET(gtk_builder_get_object(builder, "create_folder_entry"));
     create_folder_btn         = GTK_WIDGET(gtk_builder_get_object(builder, "create_folder_btn"));    
+    error_create_folder_label = GTK_WIDGET(gtk_builder_get_object(builder, "error_create_folder_label"));
 }
 
 void on_quit() {
@@ -193,11 +200,15 @@ void on_click_new_folder() {
 }
 
 void on_create_file_btn_clicked() {
+    bool result;
     char* path = malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(create_file_entry))) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
     strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
     strcat(path, "/");
     strcat(path, (char*)gtk_entry_get_text(GTK_ENTRY(create_file_entry)));
-    create_file((char*)path);
+    result = create_file((char*)path);
+    if (result == true) {
+        gtk_label_set_text(GTK_LABEL(error_create_file_label), "Error creation of file");
+    }
     free(path);
     gtk_widget_hide(modal_create_file);
     actualize_tree_view();
@@ -206,36 +217,28 @@ void on_create_file_btn_clicked() {
 void on_create_folder_btn_clicked() {
     char* path = (char*)gtk_entry_get_text(GTK_ENTRY(entry_search));
     char* name = (char*)gtk_entry_get_text(GTK_ENTRY(create_folder_entry));
-    create_folder(path, name);
+    bool result;
+    result = create_folder(path, name);
+    if (result == true) {
+        gtk_label_set_text(GTK_LABEL(error_create_folder_label), "Error creation of folder");
+    }
     gtk_widget_hide(modal_create_folder);
     actualize_tree_view();
 }
 
 void row_click(GtkTreeView *tree_view, GtkTreePath *path) {
     char* name = get_name_row_activated(tree_view, path);
-    char* full_path;
     char* parent_folder;
-    full_path = (char*)malloc(sizeof(char) * (strlen(name) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
     parent_folder = (char*)malloc(sizeof(char) * (strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + strlen("Parent folder : ") + 1));
     strcpy(parent_folder, "Parent folder : ");
     strcat(parent_folder, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
-    strcpy(full_path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
-    strcat(full_path, "/");
-    strcat(full_path, name);
-    struct stat statbuf;
-
-    if (stat(full_path, &statbuf) == -1) {
-        perror("stat");
-        exit(EXIT_FAILURE);
-    }
-
+    
     /*----  make old name in globale ----*/
     old_name = (char*)malloc(sizeof(char) * strlen(name));
     old_name = name;
 
     gtk_label_set_text(GTK_LABEL(parent_folder_label), parent_folder);
     free(parent_folder);
-    free(full_path);
     gtk_entry_set_text(GTK_ENTRY(rename_entry), (const gchar*)name);
     gtk_widget_show(modal_file);
 
@@ -255,8 +258,7 @@ void init_tree_view() {
 
     model = gtk_list_store_new(N_COLUMNS,
                             G_TYPE_STRING,   /* FILE_NAME */
-                            G_TYPE_UINT,     /* FILE_SIZE */
-                            G_TYPE_STRING,   /* FILE_DESCRIPTION */
+                            G_TYPE_STRING,     /* FILE_SIZE */
                             G_TYPE_STRING    /* COLOR */
                             );
 
@@ -276,7 +278,7 @@ void init_tree_view() {
         } else {
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
-                                        FILE_SIZE, 10,
+                                        FILE_SIZE, humanFileSize(file_names[i].size),
                                         -1);
         }
     }
@@ -332,9 +334,32 @@ void on_rename_btn_clicked() {
     strcat(old_path, old_name);
     strcat(new_path, (char*)gtk_entry_get_text(GTK_ENTRY(rename_entry)));
 
-    printf("new name : %s", new_path);
     if (rename_file(old_path, new_path) != 0) {
         gtk_label_set_text(GTK_LABEL(error_rename), error);
     }
     free(new_path);
+}
+
+
+void on_delete_btn_clicked() {
+    char* path;
+    struct stat statbuf;
+
+    path = (char*)malloc(sizeof(char) * (strlen(old_name) + strlen(gtk_entry_get_text(GTK_ENTRY(entry_search))) + 2));
+    strcpy(path, (char*)gtk_entry_get_text(GTK_ENTRY(entry_search)));
+    strcat(path, "/");
+    strcat(path, old_name);
+
+    if (stat(path, &statbuf) == -1) {
+        perror("stat");
+        exit(EXIT_FAILURE);
+    }
+    if (S_ISDIR(statbuf.st_mode)) {
+        remove_directory(path);
+    } else {
+        delete_file(path);
+    }
+    free(path);
+    actualize_tree_view();
+    gtk_widget_hide(modal_file);
 }
