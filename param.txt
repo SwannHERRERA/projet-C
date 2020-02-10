@@ -1,2 +1,8 @@
-[fichier cacher]
-non
+[display hidden file]
+no
+
+[sort by]
+A-Z
+
+[start folder]
+/home/get_env("USER")/Documents
