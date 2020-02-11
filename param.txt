@@ -5,4 +5,4 @@ no
 A-Z
 
 [start folder]
-/home/get_env("USER")/Documents
+/home/swannherrera/Documents
