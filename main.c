@@ -57,15 +57,18 @@ GtkWidget*          list_of_file;
 GtkListStore*       model;
 GtkTreeViewColumn*  column;
 
+/*----  Param  ----*/
+Params* param;
+
 int main(int argc, char** argv) {
+    param = get_params();
     activate(argc, argv);
 
     return EXIT_SUCCESS;
 }
 void activate(int argc,char** argv) {
     gtk_init(&argc, &argv);
-
-    builder = gtk_builder_new_from_file("./test.ui");
+    builder = gtk_builder_new_from_file(param->ui_file);
 
     load_widgets();
 
@@ -168,9 +171,9 @@ void on_btn_search_clicked() {
 
 void actualize_tree_view() {
     const char* path = gtk_entry_get_text(GTK_ENTRY(entry_search));
-    u_int16_t nb_of_file = count_nb_file_in_dir(path);
+    u_int16_t nb_of_file = count_nb_file_in_dir(path, param->display_hidden_file);
     u_int8_t i;
-    MY_FILE* file_names = list_directory(path);
+    MY_FILE* file_names = list_directory(path, param->display_hidden_file);
     gtk_list_store_clear(model);
 
      for (i = 0; i < nb_of_file; i++) {
@@ -180,7 +183,7 @@ void actualize_tree_view() {
             strcat(path, "/");
             strcat(path, file_names[i].name);
             char size_of_file[15];
-            sprintf(size_of_file, "%hu", count_nb_file_in_dir(path));
+            sprintf(size_of_file, "%hu", count_nb_file_in_dir(path, param->display_hidden_file));
 
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,
@@ -281,15 +284,12 @@ void row_click(GtkTreeView *tree_view, GtkTreePath *path) {
 }
 
 void init_tree_view() {
-    char* path = (char*)malloc(sizeof(char) * (strlen("/home/") + strlen(getenv("USER")) + 1));
-    strcpy(path, "/home/");
-    strcat(path, getenv("USER"));
 
-    gtk_entry_set_text(GTK_ENTRY(entry_search), (const gchar*) path);
+    gtk_entry_set_text(GTK_ENTRY(entry_search), (const gchar*) param->start_folder);
 
-    u_int16_t nb_of_file = count_nb_file_in_dir(path);
+    u_int16_t nb_of_file = count_nb_file_in_dir(param->start_folder, param->display_hidden_file);
     u_int8_t i;
-    MY_FILE* file_names = list_directory(path);
+    MY_FILE* file_names = list_directory(param->start_folder, param->display_hidden_file);
     list_of_file = GTK_WIDGET(gtk_builder_get_object(builder, "list_of_file"));
 
     model = gtk_list_store_new(N_COLUMNS,
@@ -305,7 +305,7 @@ void init_tree_view() {
             strcat(path, "/");
             strcat(path, file_names[i].name);
             char size_of_file[15];
-            sprintf(size_of_file, "%hu", count_nb_file_in_dir(path));
+            sprintf(size_of_file, "%hu", count_nb_file_in_dir(path, param->display_hidden_file));
 
             gtk_list_store_insert_with_values(model, NULL, -1,
                                         FILE_NAME, file_names[i].name,

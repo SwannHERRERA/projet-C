@@ -147,13 +147,13 @@ short remove_directory(const char *path) {
 //     return EXIT_SUCCESS;
 // }
 
-u_int16_t count_nb_file_in_dir(const char* path) {
+u_int16_t count_nb_file_in_dir(const char* path, bool count_hidden_file) {
     struct dirent* entry;
     DIR * directory;
     u_int16_t file_count = 0;
     directory = opendir(path);
     while ((entry = readdir(directory)) != NULL) {
-        if (entry->d_name[0] != '.') {
+        if (count_hidden_file || entry->d_name[0] != '.') {
             file_count += 1;
         }
     }
@@ -161,7 +161,7 @@ u_int16_t count_nb_file_in_dir(const char* path) {
     return file_count;
 }
 
-MY_FILE* list_directory(const char* path) {
+MY_FILE* list_directory(const char* path, bool display_hidden_file) {
     u_int8_t i = 0;
     // u_int8_t j;
     u_int16_t size_of_dir;
@@ -171,12 +171,12 @@ MY_FILE* list_directory(const char* path) {
     struct stat statbuf;
 
     actual_directory = opendir(path);
-    size_of_dir = count_nb_file_in_dir(path);
+    size_of_dir = count_nb_file_in_dir(path, display_hidden_file);
     MY_FILE* files = (MY_FILE*)malloc(sizeof(MY_FILE) * (size_of_dir + 1));
 
     if (actual_directory && files) {
         while ((directory = readdir(actual_directory)) != NULL) {
-            if (directory->d_name[0] == '.') {
+            if (!display_hidden_file && directory->d_name[0] == '.') {
                 continue;
             }
             (files + i)->name = (char*)malloc(sizeof(char) * (strlen(directory->d_name) + 1));

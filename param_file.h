@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef char bool;
 typedef struct Params {
-    char* display_hidden_file;
+    bool display_hidden_file;
     char* sort_by;
     char* start_folder;
+    char* ui_file;
 } Params;
 
 

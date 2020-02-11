@@ -6,3 +6,6 @@ A-Z
 
 [start folder]
 /home/swannherrera/Documents
+
+[ui file]
+./test.ui

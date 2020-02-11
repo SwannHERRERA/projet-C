@@ -13,11 +13,11 @@ typedef struct MY_FILE {
     time_t last_change;
 } MY_FILE;
 
-u_int16_t count_nb_file_in_dir(const char* path);
+u_int16_t count_nb_file_in_dir(const char* path, bool count_hidden_file);
 
 char* get_full_path (const char* path);
 
-MY_FILE* list_directory(const char* path);
+MY_FILE* list_directory(const char* path, bool display_hidden_file);
 
 bool create_file(char* path);
 

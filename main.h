@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include "file_util.h"
+#include "param_file.h"
 
 enum {
     FILE_NAME,

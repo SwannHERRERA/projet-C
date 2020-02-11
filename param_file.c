@@ -22,8 +22,7 @@ Params* get_params(void) {
     init = (Params*)malloc(sizeof(Params));
     
     strcpy(tmp, get_param("display hidden file", pf));
-    init->display_hidden_file = (char*)malloc(sizeof(char) * strlen(tmp) + 1);
-    strcpy(init->display_hidden_file, tmp);
+    init->display_hidden_file = strcmp(tmp, "no") != 0;
 
     strcpy(tmp, get_param("sort by", pf));
     init->sort_by = (char*)malloc(sizeof(char) * strlen(tmp) + 1);
@@ -33,6 +32,10 @@ Params* get_params(void) {
     strcpy(tmp, get_param("start folder", pf));
     init->start_folder = (char*)malloc(sizeof(char) * strlen(tmp) + 1);
     strcpy(init->start_folder, tmp);
+    
+    strcpy(tmp, get_param("ui file", pf));
+    init->ui_file = (char*)malloc(sizeof(char) * strlen(tmp) + 1);
+    strcpy(init->ui_file, tmp);
     
     fclose(pf);
 
